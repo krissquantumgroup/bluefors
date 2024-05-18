@@ -670,16 +670,17 @@ class BlueForPlotter:
         plt.show(block=False)
 
 if __name__ == "__main__":
-
-    log_folder = r'Z:\logs\BF5\Logfiles'
-    start_date = date(2024,2,17)
-    end_date   = date(2024,3,26)
+    log_folder = r'/home/jaseung/Downloads/Logfiles'
+    log_folder = r"C:\Users\jaseung\Downloads\20240518_Bluefors_log"
+    start_date = date(2024,5,13)
+    end_date   = date(2024,5,14)
 
     log_loader = BlueForsLogLoader(log_folder, start_date, end_date)
     plotter = BlueForPlotter(log_loader = log_loader)
 
+    plotter.plot_temperature_pressure_flowmeter(yscale='log')
     plotter.plot_temperature_pressure_flowmeter_status(yscale='log')
-    # plotter.plot_compressor_pressure(yscale='linear')
+    plotter.plot_temperature_pressure_status(yscale='log')
 
     # plotter.plot_temperature(yscale='log')
     # plotter.plot_pressure(yscale='log')
