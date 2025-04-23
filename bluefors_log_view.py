@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import date, timedelta
-import textwrap
  
 class BlueForsLogLoader:
     """ Load log data from log files """
@@ -18,14 +17,13 @@ class BlueForsLogLoader:
 
         self._status_column_name = self._get_status_column_name()
         
-        self.temperature_datetimes, self.temperatures = self.load_temperature()
-        self.resistance_datetimes, self.resistances = self.load_resistance()
-        self.pressure_datetime, self.pressures = self.load_pressure()
-        self.flowmeter_datetime, self.flowmeter = self.load_flowmeter()
-        self.status_datatime, self.status = self.load_status()
-
+        self.temperature_datetimes, self.temperatures = self._load_temperature()
+        self.resistance_datetimes, self.resistances = self._load_resistance()
+        self.pressure_datetime, self.pressures = self._load_pressure()
+        self.flowmeter_datetime, self.flowmeter = self._load_flowmeter()
+        self.status_datatime, self.status = self._load_status()
         
-    def get_full_file_names(self, date:date, type:str):
+    def _get_full_file_names(self, date:date, type:str):
         """Generate file names.
 
         Parameters
@@ -65,13 +63,13 @@ class BlueForsLogLoader:
         
         return full_file_name
     
-    def load_temperature_oneday(self, date:date):
+    def _load_temperature_oneday(self, date:date):
         """
             Read temperature log files and return two pandas dataframe of datetime and temperatures.
         """
         
                
-        full_file_names = self.get_full_file_names(date, 'temperature')
+        full_file_names = self._get_full_file_names(date, 'temperature')
         
         df_datetimes, df_temperatures = pd.DataFrame(), pd.DataFrame()
         
@@ -97,12 +95,12 @@ class BlueForsLogLoader:
 
         return df_datetimes, df_temperatures
 
-    def load_resistance_oneday(self, date:date):
+    def _load_resistance_oneday(self, date:date):
         """
             Read resistance log files and return two pandas dataframe of datetime and resistances.
         """
              
-        full_file_names = self.get_full_file_names(date, 'resistance')
+        full_file_names = self._get_full_file_names(date, 'resistance')
         
         df_datetimes, df_resistances = pd.DataFrame(), pd.DataFrame()
         
@@ -122,7 +120,7 @@ class BlueForsLogLoader:
            
         return df_datetimes, df_resistances
 
-    def load_pressure_oneday(self, date:date):
+    def _load_pressure_oneday(self, date:date):
         """
             Read pressure log file and return two pandas dataframe of datetime and pressure.
         """
@@ -131,7 +129,7 @@ class BlueForsLogLoader:
         # file_name = 'maxigauge ' + date_str + '.log'
         # full_file_name = os.path.join(base_path, file_name)
 
-        full_file_name = self.get_full_file_names(date, 'pressure')
+        full_file_name = self._get_full_file_names(date, 'pressure')
 
         df_datetimes, df_pressures = pd.DataFrame(), pd.DataFrame()
 
@@ -148,7 +146,7 @@ class BlueForsLogLoader:
 
         return df_datetimes, df_pressures
 
-    def load_flowmeter_oneday(self, date: date):
+    def _load_flowmeter_oneday(self, date: date):
         """
             Read flowmeter log file and return two pandas dataframe of datetime and flowrate.
         """
@@ -157,7 +155,7 @@ class BlueForsLogLoader:
         # file_name = 'Flowmeter ' + date_str + '.log'
         # full_file_name = os.path.join(base_path, file_name)
 
-        full_file_name = self.get_full_file_names(date, 'flowmeter')
+        full_file_name = self._get_full_file_names(date, 'flowmeter')
         df_datetimes, df_flowmeter = pd.DataFrame(), pd.DataFrame()
         
         with open(full_file_name, 'r') as f:
@@ -173,7 +171,7 @@ class BlueForsLogLoader:
 
         return df_datetimes, df_flowmeter
 
-    def load_status_oneday(self, date:date):
+    def _load_status_oneday(self, date:date):
         """
         Read status log file and return two pandas dataframe of datetime and status.
         """
@@ -182,7 +180,7 @@ class BlueForsLogLoader:
         # file_name = 'Status_' + date_str + '.log'
         # full_file_name = os.path.join(base_path, file_name)
 
-        full_file_name = self.get_full_file_names(date, 'status')
+        full_file_name = self._get_full_file_names(date, 'status')
         
         df_datetimes, df_status = pd.DataFrame(), pd.DataFrame()
         
@@ -202,7 +200,7 @@ class BlueForsLogLoader:
         return df_datetimes, df_status
 
     def _get_status_column_name(self):
-        full_file_name = self.get_full_file_names(self.start_date, 'status')
+        full_file_name = self._get_full_file_names(self.start_date, 'status')
         try:
             with open(full_file_name) as f:
                 first_line = f.readline()
@@ -212,7 +210,7 @@ class BlueForsLogLoader:
             print("No status file found.")
             return None
 
-    def load_temperature(self):
+    def _load_temperature(self):
         """
         Return time and temperature dataframes between start_date and end_date
         """
@@ -223,15 +221,10 @@ class BlueForsLogLoader:
         while temp_date <= self.end_date:
             
             # try:
-            df_datetimes, df_temperatures = self.load_temperature_oneday(temp_date)
+            df_datetimes, df_temperatures = self._load_temperature_oneday(temp_date)
             
             if not df_datetimes.empty:
-                try:
-                    # df_datetimes_all = df_datetimes_all.reset_index(drop=True)
-                    # df_datetimes = df_datetimes.reset_index(drop=True)
-                    # df_temperatures_all = df_temperatures_all.reset_index(drop=True)
-                    # df_temperatures = df_temperatures.reset_index(drop=True)
-
+                try:                    
                     df_datetimes_all = pd.concat([df_datetimes_all, df_datetimes], axis=0) #, ignore_index=True)
                     df_temperatures_all = pd.concat([df_temperatures_all, df_temperatures]) #, axis=0, ignore_index=True)
                 except pd.errors.InvalidIndexError:
@@ -244,12 +237,12 @@ class BlueForsLogLoader:
 
             temp_date += timedelta(days=1)
         
-        df_datetimes_all.columns = ["50K", "4K","still","MCX"]
-        df_temperatures_all.columns = ["50K", "4K","still","MCX"]
+        df_datetimes_all.columns = ["50K", "4K", "still", "MCX"]
+        df_temperatures_all.columns = ["50K", "4K", "still", "MCX"]
 
         return df_datetimes_all, df_temperatures_all
 
-    def load_resistance(self):
+    def _load_resistance(self):
         """
         Return time and resistance dataframes between start_date and end_date
         """
@@ -258,7 +251,7 @@ class BlueForsLogLoader:
 
         while temp_date <= self.end_date:
             try:
-                df_datetimes, df_resistances = self.load_resistance_oneday(temp_date)
+                df_datetimes, df_resistances = self._load_resistance_oneday(temp_date)
             except FileNotFoundError:
                 df_datetimes, df_resistances = pd.DataFrame(), pd.DataFrame()
                 print(f"FileNotFound: {temp_date}, resistance")
@@ -273,7 +266,7 @@ class BlueForsLogLoader:
 
         return df_datetimes_all, df_resistances_all
 
-    def load_pressure(self):
+    def _load_pressure(self):
         """
         Return time and pressure dataframes between start_date and end_date
         """
@@ -282,7 +275,7 @@ class BlueForsLogLoader:
 
         while temp_date <= self.end_date:
             try:
-                df_datetimes, df_pressures = self.load_pressure_oneday(temp_date)
+                df_datetimes, df_pressures = self._load_pressure_oneday(temp_date)
             except FileNotFoundError:
                 df_datetimes, df_pressures = pd.DataFrame(), pd.DataFrame()
                 print(f"FileNotFound: {temp_date}, pressure")
@@ -296,7 +289,7 @@ class BlueForsLogLoader:
 
         return df_datetimes_all, df_pressures_all
 
-    def load_flowmeter(self):
+    def _load_flowmeter(self):
         """
         Return time and flowmeter dataframes between start_date and end_date
         """
@@ -305,7 +298,7 @@ class BlueForsLogLoader:
 
         while temp_date <= self.end_date:
             try:
-                df_datetimes, df_flowmeters = self.load_flowmeter_oneday(temp_date)
+                df_datetimes, df_flowmeters = self._load_flowmeter_oneday(temp_date)
             except FileNotFoundError:
                 df_datetimes, df_flowmeters = pd.DataFrame(), pd.DataFrame()
                 print(f"FileNotFound: {temp_date}, flowmeter")
@@ -319,7 +312,7 @@ class BlueForsLogLoader:
 
         return df_datetimes_all, df_flowmeters_all
 
-    def load_status(self):
+    def _load_status(self):
         """
             Return time and status dataframes between start_date and end_date.
         """
@@ -328,7 +321,7 @@ class BlueForsLogLoader:
 
         while temp_date <= self.end_date:
             try:
-                df_datetimes, df_status = self.load_status_oneday(temp_date)
+                df_datetimes, df_status = self._load_status_oneday(temp_date)
             except FileNotFoundError:
                 df_datetimes, df_status = pd.DataFrame(), pd.DataFrame()
                 print(f"FileNotFound: {temp_date}, status")
@@ -352,12 +345,18 @@ class BlueForPlotter:
     def __init__(self, log_loader:BlueForsLogLoader):
         self.log_loader = log_loader
 
+        # set plot parameters globally
+        from matplotlib import rcParams
+        rcParams["axes.labelsize"] = 14 
+        rcParams["xtick.labelsize"] = 12
+        rcParams["ytick.labelsize"] = 12
+
     def _plot_temperature(self, axes, axe_index, yscale="linear"):
         
         if self.log_loader.temperatures.size == 0:
             print("No temperature data available!")
         else:
-            axes[axe_index].set_ylabel('Temperature(K)')
+            axes[axe_index].set_ylabel('Temperature (K)')
             axes[axe_index].set_yscale(yscale)
             axes[axe_index].grid()
             
@@ -372,7 +371,7 @@ class BlueForPlotter:
                 except ValueError:
                     pass
 
-            axes[axe_index].legend(fancybox=True, shadow=True)
+            axes[axe_index].legend(frameon=False)
     
     def _plot_resistance(self, axes, axe_index, yscale="linear"):
         
@@ -394,7 +393,7 @@ class BlueForPlotter:
                 except ValueError:
                     pass
 
-            axes[axe_index].legend(fancybox=True, shadow=True)
+            axes[axe_index].legend(frameon=False)
 
     def _plot_pressure(self, axes, axe_index, yscale="linear"):
 
@@ -415,7 +414,7 @@ class BlueForPlotter:
             axes[axe_index].plot(self.log_loader.pressure_datetime, self.log_loader.pressures.P5, plot_symbol, label="P5")
             axes[axe_index].plot(self.log_loader.pressure_datetime, self.log_loader.pressures.P6, plot_symbol, label="P6")
           
-            axes[axe_index].legend(fancybox=True, shadow=True)
+            axes[axe_index].legend(frameon=False)
 
     def _plot_flowmeter(self, axes, axe_index, yscale="linear"):
 
@@ -423,12 +422,13 @@ class BlueForPlotter:
             print("No pressure data available!")
         else:
             axes[axe_index].set_xlabel('Datetime')
-            axes[axe_index].set_ylabel('Flowrate (mmol/s)')
+            axes[axe_index].set_ylabel('Flow rate (mmol/s)')
             axes[axe_index].grid()
             
-            axes[axe_index].plot(self.log_loader.flowmeter_datetime, self.log_loader.flowmeter.flowmeter, label="Flowmeter")
+            plot_symbol = '.-'
+            axes[axe_index].plot(self.log_loader.flowmeter_datetime, self.log_loader.flowmeter.flowmeter, plot_symbol, label="Flowmeter")
             
-            axes[axe_index].legend(fancybox=True, shadow=True)
+            axes[axe_index].legend(frameon=False)
 
     def _plot_status(self, axes, axe_index, yscale="linear", status_list=None):
          
@@ -442,12 +442,13 @@ class BlueForPlotter:
 
             legend_labels = self.log_loader._status_column_name
 
+            plot_symbol = '.-'
             for i, label in enumerate(legend_labels):
                 if status_list is not None:
                     if label in status_list:
-                        axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status[label], label=label)  
+                        axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status[label], plot_symbol, label=label)  
                 else:
-                    axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status[label], label=label)  
+                    axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status[label], plot_symbol, label=label)  
 
             axes[axe_index].legend(fancybox=True, shadow=True)
 
@@ -468,30 +469,32 @@ class BlueForPlotter:
                 if label=="cpahp" or label=="cpavgh":  cpahp_index = i
                 if label=="cpalp_2":  cpalp_2_index = i
                 if label=="cpahp_2":  cpahp_2_index = i
-
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_index], label="Low P")            
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index], label="High P")            
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index] - self.log_loader.status.iloc[:,cpalp_index], label="Delta P")        
+            
+            plot_symbol = '.-'
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_index], plot_symbol, label="Low P")            
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index], plot_symbol, label="High P")            
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index] - self.log_loader.status.iloc[:,cpalp_index], plot_symbol, label="Delta P")        
             
             if "cpalp_2" in self.log_loader._status_column_name:
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_2_index], label="Low P")            
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index], label="High P")            
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index] - self.log_loader.status.iloc[:,cpalp_2_index], label="Delta P")        
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_2_index], plot_symbol, label="Low P")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index], plot_symbol, label="High P")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index] - self.log_loader.status.iloc[:,cpalp_2_index], plot_symbol, label="Delta P")        
             
-            axes[axe_index].legend(fancybox=True, shadow=True)
+            axes[axe_index].legend(frameon=False)
 
     def plot(self, what_to_plot:list[str], yscale="linear", status_list=None):
         
         num_plot = len(what_to_plot)
         
-        fig, axes = plt.subplots(num_plot, 1,sharex=True, figsize=(8, 3*num_plot))
+        fig, axes = plt.subplots(num_plot, 1,sharex=True, figsize=(12, 3*num_plot))
+
         if num_plot==1: axes = [axes]
 
         title = " \ " .join(what_to_plot)
-        fig.suptitle(title)
+        title += "\n" + "From " + str(self.log_loader.start_date) + " to " + str(self.log_loader.end_date)
+        fig.suptitle(title, fontsize=16)
 
-        axe_index = 0
-        for what in what_to_plot:
+        for axe_index, what in enumerate(what_to_plot):
             if what=="temperature":
                self._plot_temperature(axes, axe_index, yscale=yscale)
             elif what=="pressure":
@@ -505,31 +508,22 @@ class BlueForPlotter:
             elif what=="compressor_pressure":
                 self._plot_compressor_pressure(axes, axe_index, yscale=yscale)
 
-
-            axe_index += 1
-
         fig.show()
 
 if __name__ == "__main__":
     
-    # parameters
+    # load log data  
     log_folder = r"Z:\logs\BF4\Logfiles"
-    start_date = date(2025,4,22)
-    end_date   = date(2025,4,22)
-
-    # create data loader and plotter
+    start_date = date(2025,4,21)
+    end_date   = date(2025,4,23)
     log_loader = BlueForsLogLoader(log_folder, start_date, end_date)
-    log_loader.show_status_names()
+    # log_loader.show_status_names()
+
+    # plot
     plotter = BlueForPlotter(log_loader=log_loader)
-
-    ######### plot what you want
-
-    plotter.plot(what_to_plot=["temperature", "pressure", "flowmeter"], yscale="linear")
+    plotter.plot(what_to_plot=["temperature", "pressure", "flowmeter"], yscale="log")
     # plotter.plot(what_to_plot=["status"], yscale="linear")
-    # plotter.plot(what_to_plot=["resistance"], yscale="linear")
+    # plotter.plot(what_to_plot=["temperature","resistance"], yscale="linear")
     # plotter.plot(what_to_plot=["temperature","compressor_pressure"], yscale="linear") 
     # plotter.plot(what_to_plot=["temperature","status"], status_list=["cpalp","cpalpa","cpahp","cpalpa", "cpahpa"])
-
-    # fig, ax = plotter.plot_resistance(temperature_stage="MCX", yscale='linear')
-
    
