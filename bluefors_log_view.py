@@ -10,19 +10,32 @@ from datetime import date, timedelta
 class BlueForsLogLoader:
     """ Load log data from log files """
         
-    def __init__(self, log_folder:str, start_date:date, end_date:date):
+    def __init__(self, log_folder:str, start_date:date, end_date:date, what_type_to_load:str=None):
         self.log_folder = log_folder
         self.start_date = start_date
         self.end_date = end_date
 
         self._status_column_name = self._get_status_column_name()
         
-        self.temperature_datetimes, self.temperatures = self._load_temperature()
-        self.resistance_datetimes, self.resistances = self._load_resistance()
-        self.pressure_datetime, self.pressures = self._load_pressure()
-        self.flowmeter_datetime, self.flowmeter = self._load_flowmeter()
-        self.status_datatime, self.status = self._load_status()
-        
+        if what_type_to_load=="temperature":
+            self.temperature_datetimes, self.temperatures = self._load_temperature()
+        elif what_type_to_load=="resistance":
+            self.resistance_datetimes, self.resistances = self._load_resistance()
+        elif what_type_to_load=="pressure":
+            self.pressure_datetime, self.pressures = self._load_pressure()
+        elif what_type_to_load=="flowmeter":
+            self.flowmeter_datetime, self.flowmeter = self._load_flowmeter()
+        elif what_type_to_load=="status":
+            self.status_datatime, self.status = self._load_status()
+        elif what_type_to_load is None:
+            self.temperature_datetimes, self.temperatures = self._load_temperature()
+            self.resistance_datetimes, self.resistances = self._load_resistance()
+            self.pressure_datetime, self.pressures = self._load_pressure()
+            self.flowmeter_datetime, self.flowmeter = self._load_flowmeter()
+            self.status_datatime, self.status = self._load_status()
+        else:
+            raise Exception("Not supported type!")
+
     def _get_full_file_names(self, date:date, type:str):
         """Generate file names.
 
@@ -339,6 +352,7 @@ class BlueForsLogLoader:
 
         print(f"Status names:\n{self._status_column_name}")
 
+
 class BlueForPlotter:
     """ Plot log data. """
 
@@ -470,16 +484,45 @@ class BlueForPlotter:
                 if label=="cpalp_2":  cpalp_2_index = i
                 if label=="cpahp_2":  cpahp_2_index = i
             
-            plot_symbol = '.-'
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_index], plot_symbol, label="Low P")            
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index], plot_symbol, label="High P")            
-            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index] - self.log_loader.status.iloc[:,cpalp_index], plot_symbol, label="Delta P")        
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index], 'r.-', label="High P")            
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_index], 'b.-', label="Low P")            
+            axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_index] - self.log_loader.status.iloc[:,cpalp_index], 'k.-', label="Delta P")        
             
             if "cpalp_2" in self.log_loader._status_column_name:
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_2_index], plot_symbol, label="Low P")            
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index], plot_symbol, label="High P")            
-                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index] - self.log_loader.status.iloc[:,cpalp_2_index], plot_symbol, label="Delta P")        
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index], 'r.-', label="High P")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpalp_2_index], 'b.-', label="Low P")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.iloc[:,cpahp_2_index] - self.log_loader.status.iloc[:,cpalp_2_index], 'k.-', label="Delta P")        
             
+            axes[axe_index].legend(frameon=False)
+
+    def _plot_compressor_temperature(self, axes, axe_index, yscale='linear'):
+    
+        if self.log_loader.status.size == 0:
+            print("No status data available!")
+        else:                
+            axes[axe_index].set_xlabel('Datetime')
+            axes[axe_index].set_ylabel('Temperature (C)')
+            axes[axe_index].set_yscale(yscale)
+            axes[axe_index].grid()
+
+            legend_labels = self.log_loader._status_column_name
+
+            try:
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempwi, label="Water In 1")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempwo, label="Water Out 1")
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempo, label="Oil 1 ")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatemph, label="Helium 1")                
+            except AttributeError:
+                pass
+          
+            try:
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempwi_2, label="Water In 2")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempwo_2, label="Water Out 2")    
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatempo, label="Oil 2")            
+                axes[axe_index].plot(self.log_loader.status_datatime, self.log_loader.status.cpatemph, label="Helium 2")            
+            except AttributeError:
+                pass        
+
             axes[axe_index].legend(frameon=False)
 
     def plot(self, what_to_plot:list[str], yscale="linear", status_list=None):
@@ -490,8 +533,8 @@ class BlueForPlotter:
 
         if num_plot==1: axes = [axes]
 
-        title = " \ " .join(what_to_plot)
-        title += "\n" + "From " + str(self.log_loader.start_date) + " to " + str(self.log_loader.end_date)
+        title = self.log_loader.log_folder + ", Today = " + str(date.today())
+        title += "\n\n" + "Log from " + str(self.log_loader.start_date) + " to " + str(self.log_loader.end_date)
         fig.suptitle(title, fontsize=16)
 
         for axe_index, what in enumerate(what_to_plot):
@@ -507,23 +550,33 @@ class BlueForPlotter:
                 self._plot_resistance(axes, axe_index, yscale=yscale)
             elif what=="compressor_pressure":
                 self._plot_compressor_pressure(axes, axe_index, yscale=yscale)
-
+            elif what=="compressor_temperature":
+                self._plot_compressor_temperature(axes, axe_index, yscale=yscale)
+            else:
+                print("\n#########################################")
+                print(f"Plotting \"{what}\" is not implemented yet!")
+                print("#########################################")
+            
         fig.show()
 
 if __name__ == "__main__":
     
     # load log data  
-    log_folder = r"Z:\logs\BF4\Logfiles"
-    start_date = date(2025,4,21)
-    end_date   = date(2025,4,23)
-    log_loader = BlueForsLogLoader(log_folder, start_date, end_date)
+    log_folder = r"Z:\logs\BF5\Logfiles"
+    # log_folder = r"C:\Users\Jaseung\Downloads\1st_test_run\1st_test_run"
+    start_date = date(2024,9,1)
+    end_date   = date(2025,9,1)
+    # log_loader = BlueForsLogLoader(log_folder, start_date, end_date)
+    log_loader = BlueForsLogLoader(log_folder, start_date, end_date, what_type_to_load="temperature")
     # log_loader.show_status_names()
 
     # plot
     plotter = BlueForPlotter(log_loader=log_loader)
-    plotter.plot(what_to_plot=["temperature", "pressure", "flowmeter"], yscale="log")
-    # plotter.plot(what_to_plot=["status"], yscale="linear")
-    # plotter.plot(what_to_plot=["temperature","resistance"], yscale="linear")
+
+    plotter.plot(what_to_plot=["temperature"], yscale="log")
+    # plotter.plot(what_to_plot=["temperature", "pressure", "flowmeter"], yscale="log")
+    # plotter.plot(what_to_plot=["temperature", "resistance", "pressure", "flowmeter"], yscale="linear")
     # plotter.plot(what_to_plot=["temperature","compressor_pressure"], yscale="linear") 
-    # plotter.plot(what_to_plot=["temperature","status"], status_list=["cpalp","cpalpa","cpahp","cpalpa", "cpahpa"])
-   
+    # plotter.plot(what_to_plot=["temperature","compressor_temperature"], yscale="linear") 
+    # plotter.plot(what_to_plot=["temperature","status"], yscale="log", status_list=["cpalp","cpalpa","cpahp","cpalpa", "cpahpa"])
+    # plotter.plot(what_to_plot=["status"], yscale="log")
