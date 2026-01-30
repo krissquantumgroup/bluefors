@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import date, timedelta
- 
+
 class BlueForsLogLoader:
     """ Load log data from log files """
         
@@ -80,7 +80,6 @@ class BlueForsLogLoader:
         """
             Read temperature log files and return two pandas dataframe of datetime and temperatures.
         """
-        
                
         full_file_names = self._get_full_file_names(date, 'temperature')
         
@@ -122,6 +121,8 @@ class BlueForsLogLoader:
         
             with open(file_name, 'r') as f: 
                 df = pd.read_csv(f, names=['date', 'time', 'resistance'], header=0)
+            with open(file_name, 'r') as f: 
+                df = pd.read_csv(f, names=['date', 'time', 'temperature'], header=0)
 
                 try:
                     df_datetime  = pd.to_datetime(df['date'] + df['time'], format=' %d-%m-%y%H:%M:%S')
@@ -168,7 +169,7 @@ class BlueForsLogLoader:
         # file_name = 'Flowmeter ' + date_str + '.log'
         # full_file_name = os.path.join(base_path, file_name)
 
-        full_file_name = self._get_full_file_names(date, 'flowmeter')
+        full_file_name = self._get_full_file_names(date, 'flowmeter')        
         df_datetimes, df_flowmeter = pd.DataFrame(), pd.DataFrame()
         
         with open(full_file_name, 'r') as f:
@@ -202,6 +203,7 @@ class BlueForsLogLoader:
                 df = pd.read_csv(f, header=None, delimiter=',', usecols=range(48)) # for some reason, sometimes a certain row of status file has extra columns, making an error.
             else:
                 df = pd.read_csv(f, header=None, delimiter=',') # for XLD, i.e., two compressors
+            df = pd.read_csv(f, header=None)
             try:
                 df_datetimes  = pd.to_datetime(df.iloc[:,0] + df.iloc[:,1], format='%d-%m-%y%H:%M:%S')
             except ValueError:
@@ -580,3 +582,4 @@ if __name__ == "__main__":
     # plotter.plot(what_to_plot=["temperature","compressor_temperature"], yscale="linear") 
     # plotter.plot(what_to_plot=["temperature","status"], yscale="log", status_list=["cpalp","cpalpa","cpahp","cpalpa", "cpahpa"])
     # plotter.plot(what_to_plot=["status"], yscale="log")
+
